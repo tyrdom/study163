@@ -4,9 +4,11 @@ import ch2_eg_lib as c2l
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-X_data =np.array( np.loadtxt("ch2data.csv",delimiter=',',usecols=(0,1),unpack=True)).T
-Y_data =np.array( [np.loadtxt("ch2data.csv",delimiter=',',usecols=(3),unpack=True)]).T
-
+# X_data =np.array( np.loadtxt("ch2data.csv",delimiter=',',usecols=(0,1),unpack=True)).T
+# Y_data =np.array( [np.loadtxt("ch2data.csv",delimiter=',',usecols=(3),unpack=True)]).T
+data=np.load("ch2_data.npz")
+X_data=data["arr_0"]
+Y_data=data["arr_1"]
 X_zs=c2l.z_score(X_data)
 Y_zs=c2l.z_score(Y_data)
 print(X_zs,Y_zs)
@@ -15,8 +17,8 @@ print(X_zs,Y_zs)
 # ax.plot_surface(np.arange(-4, 4, 0.25), np.arange(-4, 4, 0.25), Y_data, rstride=1, cstride=1, cmap='rainbow')
 learning_rate = 0.5
 
-X =tf.placeholder(tf.float32,[None,2])
-Y =tf.placeholder(tf.float32,[None,1])
+X =tf.placeholder(tf.float32,[None,3])
+Y =tf.placeholder(tf.float32,[None,2])
 
 batch =256
 steps = X_data.shape[0]//batch-1
@@ -31,13 +33,13 @@ def add_layer(inputs, in_size, out_size, activation_function=None):
         outputs = activation_function(Wx_plus_b)
     return outputs
 
-Layer1 = add_layer(X,2,1024,activation_function=tf.nn.relu)
+Layer1 = add_layer(X,3,1024,activation_function=tf.nn.relu)
 
 Layer2 = add_layer(Layer1,1024,512,activation_function=tf.nn.relu)
 Layer3 = add_layer(Layer2,512,256,activation_function=tf.nn.relu)
 Layer4 = add_layer(Layer3,256,128,activation_function=tf.nn.relu)
 
-Pred = add_layer(Layer4,128,1,activation_function=None)
+Pred = add_layer(Layer4,128,2,activation_function=None)
 
 loss = tf.reduce_mean(tf.reduce_sum(tf.square(Y-Pred)))
 
@@ -53,4 +55,4 @@ with tf.Session() as sess:
         batch_X = X_zs[i_step * batch:((i_step + 1) * batch - 1), :]
         batch_Y = Y_zs[i_step * batch:((i_step + 1) * batch - 1), :]
         l,_=sess.run([loss,Optimizer],feed_dict= {X:batch_X,Y:batch_Y})
-        print("Epoch {0}: {1}".format(i, l ))
+        print("Epoch {0}: {1}".format(i, l))
